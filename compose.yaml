@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   backend:
     image: node:22-alpine
@@ -15,11 +13,11 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: testuser
-      POSTGRES_PASSWORD: testpass
-      POSTGRES_DB: testdb
+      POSTGRES_USER: ${LAZYADMIN_PG_USER:-testuser}
+      POSTGRES_PASSWORD: ${LAZYADMIN_PG_PASSWORD:-testpass}
+      POSTGRES_DB: ${LAZYADMIN_PG_DB:-testdb}
     ports:
-      - "5433:5432"
+      - "${LAZYADMIN_PG_PORT:-5433}:5432"
     networks:
       - internal
 
@@ -48,8 +46,9 @@ services:
     cap_drop:
       - ALL
     environment:
-      LAZYADMIN_CONFIG_PATH: /run/lazyadmin/config.yaml
-      LAZYADMIN_PG_DSN: postgres://testuser:testpass@postgres:5432/testdb?sslmode=disable
+      LAZYADMIN_CONFIG_PATH: ${LAZYADMIN_CONFIG_PATH:-/run/lazyadmin/config.yaml}
+      LAZYADMIN_PG_DSN: ${LAZYADMIN_PG_DSN:-postgres://${LAZYADMIN_PG_USER:-testuser}:${LAZYADMIN_PG_PASSWORD:-testpass}@postgres:5432/${LAZYADMIN_PG_DB:-testdb}?sslmode=disable}
+      SSH_USER: ${SSH_USER:-${USER}}
     volumes:
       - ./config/lazyadmin.yaml:/run/lazyadmin/config.yaml:ro
       - lazyadmin-data:/var/lib/lazyadmin
