@@ -21,13 +21,6 @@ mise install docker@latest
 mise run install-docker
 ```
 
-### Option 3: Run the script directly
-
-```bash
-# Run the standalone script
-bash scripts/install-docker.sh
-```
-
 ## Supported Operating Systems
 
 - Ubuntu
@@ -48,6 +41,7 @@ bash scripts/install-docker.sh
 ## Post-Installation
 
 After installation, the script will:
+
 1. Start the Docker service
 2. Enable Docker to start on boot
 3. Add your user to the `docker` group (requires logout/login to take effect)
@@ -67,4 +61,3 @@ sudo docker run hello-world
 - This plugin requires `sudo` privileges
 - You may need to log out and back in after installation for the docker group membership to take effect
 - The plugin installs the latest stable version from Docker's official repositories
-
