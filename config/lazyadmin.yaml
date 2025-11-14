@@ -1,0 +1,48 @@
+project: lazyadmin-demo
+env: dev
+
+logging:
+  sqlite_path: /var/lib/lazyadmin/db.sqlite
+
+auth:
+  require_yubikey: false
+  yubikey_mode: fido2
+
+users:
+  - id: will
+    ssh_users: ["will"]
+    roles: ["owner", "admin"]
+    yubikey_credentials:
+      - rp_id: "lazyadmin.local"
+        credential_id: "BASE64URL_CRED_ID"
+        public_key: "BASE64URL_PUBLIC_KEY"
+
+  - id: readonly
+    ssh_users: ["readonly"]
+    roles: ["read_only"]
+    yubikey_credentials: []
+
+resources:
+  http:
+    backend:
+      base_url: http://backend:3000
+  postgres:
+    main:
+      dsn_env: LAZYADMIN_PG_DSN
+
+operations:
+  - id: backend_health
+    label: "Backend HTTP health"
+    type: http
+    target: backend
+    method: GET
+    path: /health
+    allowed_roles: ["owner", "admin", "read_only"]
+
+  - id: db_user_count
+    label: "Count users"
+    type: postgres
+    target: main
+    query: "SELECT COUNT(*) AS user_count FROM users"
+    allowed_roles: ["owner", "admin"]
+
