@@ -1,0 +1,63 @@
+version: "3.9"
+
+services:
+  backend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ./backend:/app
+    command: ["npm", "start"]
+    environment:
+      PORT: 3000
+    networks:
+      - internal
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: testuser
+      POSTGRES_PASSWORD: testpass
+      POSTGRES_DB: testdb
+    ports:
+      - "5433:5432"
+    networks:
+      - internal
+
+  caddy:
+    image: caddy:2-alpine
+    depends_on:
+      - backend
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    ports:
+      - "8080:8080"
+    networks:
+      - internal
+
+  lazyadmin:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    stdin_open: true
+    tty: true
+    networks:
+      - internal
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      LAZYADMIN_CONFIG_PATH: /run/lazyadmin/config.yaml
+      LAZYADMIN_PG_DSN: postgres://testuser:testpass@postgres:5432/testdb?sslmode=disable
+    volumes:
+      - ./config/lazyadmin.yaml:/run/lazyadmin/config.yaml:ro
+      - lazyadmin-data:/var/lib/lazyadmin
+
+networks:
+  internal:
+    driver: bridge
+
+volumes:
+  lazyadmin-data: {}
+

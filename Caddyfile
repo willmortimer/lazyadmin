@@ -1,0 +1,15 @@
+:8080 {
+	encode zstd gzip
+
+	@health path /health
+
+	handle @health {
+		reverse_proxy backend:3000
+	}
+
+	# Default route (for future endpoints if you want)
+	handle {
+		respond "lazyadmin Caddy dev proxy" 200
+	}
+}
+
