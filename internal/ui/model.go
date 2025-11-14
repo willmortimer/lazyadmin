@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"crypto/rand"
 	"fmt"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/you/lazyadmin/internal/config"
 	"github.com/you/lazyadmin/internal/logging"
 	"github.com/you/lazyadmin/internal/tasks"
+	"github.com/you/lazyadmin/internal/users"
 )
 
 type mode int
@@ -22,6 +24,7 @@ const (
 	modeMain mode = iota
 	modeLogs
 	modeHelp
+	modeUsers
 )
 
 type filterType int
@@ -60,10 +63,37 @@ func (i taskItem) Title() string       { return i.task.Label }
 func (i taskItem) Description() string { return fmt.Sprintf("task:%s (risk:%s)", i.task.ID, i.task.RiskLevel) }
 func (i taskItem) FilterValue() string { return i.task.Label }
 
+type userItem struct {
+	user *users.User
+}
+
+func (i userItem) Title() string {
+	return i.user.ID
+}
+
+func (i userItem) Description() string {
+	return fmt.Sprintf("SSH: %v | Roles: %v", i.user.SSHUsers, i.user.Roles)
+}
+
+func (i userItem) FilterValue() string {
+	return i.user.ID
+}
+
+type userRegistrationMsg struct {
+	userID string
+	err    error
+}
+
+type userListMsg struct {
+	users []*users.User
+	err   error
+}
+
 type Model struct {
 	cfg         *config.Config
 	principal   *auth.Principal
 	logger      *logging.AuditLogger
+	userStore   *users.Store
 	httpClients map[string]*clients.HTTPClient
 	pgClients   map[string]*clients.PostgresClient
 	taskRunner  *tasks.Runner
@@ -81,6 +111,11 @@ type Model struct {
 	lastTaskResult *tasks.TaskResult
 	lastSummary    string
 
+	// User management fields
+	userList        []*users.User
+	registeringUser bool
+	registerStatus  string
+
 	logTable table.Model
 	logRows  []table.Row
 }
@@ -89,6 +124,7 @@ func NewModel(
 	cfg *config.Config,
 	principal *auth.Principal,
 	logger *logging.AuditLogger,
+	userStore *users.Store,
 	httpClients map[string]*clients.HTTPClient,
 	pgClients map[string]*clients.PostgresClient,
 	runner *tasks.Runner,
@@ -126,6 +162,7 @@ func NewModel(
 		cfg:         cfg,
 		principal:   principal,
 		logger:      logger,
+		userStore:   userStore,
 		httpClients: ensureHTTPMap(httpClients),
 		pgClients:   pgClients,
 		taskRunner:  runner,
@@ -187,6 +224,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.updateLogs(msg)
 	case modeHelp:
 		return m.updateHelp(msg)
+	case modeUsers:
+		return m.updateUsers(msg)
 	default:
 		return m, nil
 	}
@@ -200,6 +239,8 @@ func (m Model) View() string {
 		return m.viewLogs()
 	case modeHelp:
 		return m.viewHelp()
+	case modeUsers:
+		return m.viewUsers()
 	default:
 		return "unknown mode"
 	}
@@ -260,6 +301,11 @@ func (m Model) updateMain(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "l":
 			m.mode = modeLogs
 			return m.withLoadedLogs(), nil
+		case "u":
+			if m.principal.IsAdmin() {
+				m.mode = modeUsers
+				return m.withLoadedUsers(), nil
+			}
 		case "?":
 			m.mode = modeHelp
 		}
@@ -288,9 +334,15 @@ func (m Model) viewMain() string {
 	}
 
 	status := fmt.Sprintf(
-		"[View: %s] [Filter: %s]  [t:toggle view] [a/h/p:filter ops] [enter:run] [l:logs] [?:help] [q:quit]",
+		"[View: %s] [Filter: %s]  [t:toggle view] [a/h/p:filter ops] [enter:run] [l:logs]%s [?:help] [q:quit]",
 		viewLabel,
 		filterLabel,
+		func() string {
+			if m.principal.IsAdmin() {
+				return " [u:users]"
+			}
+			return ""
+		}(),
 	)
 
 	s := m.list.View() + "\n"
@@ -417,7 +469,7 @@ func (m Model) updateHelp(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m Model) viewHelp() string {
-	return `
+	help := `
 lazyadmin keybindings:
 
   Main mode:
@@ -432,8 +484,12 @@ lazyadmin keybindings:
 
     p            Filter: Postgres operations only
 
-    l            View recent audit logs
-
+    l            View recent audit logs`
+	if m.principal.IsAdmin() {
+		help += `
+    u            Manage users (admin only)`
+	}
+	help += `
     ?            Show this help
 
     q / ctrl+c   Quit
@@ -442,9 +498,15 @@ lazyadmin keybindings:
 
     q / esc      Return to main
 
+  Users mode (admin only):
+
+    n            Register new user with YubiKey
+    q / esc      Return to main
+
 (Press any key to return)
 
 `
+	return help
 }
 
 func (m Model) runOperation(op config.Operation) tea.Cmd {
@@ -519,5 +581,158 @@ func (m Model) runTask(task config.Task) tea.Cmd {
 			result:  &tr,
 			summary: summary,
 		}
+	}
+}
+
+// === USERS MODE ===
+
+func (m Model) withLoadedUsers() Model {
+	if m.userStore == nil {
+		m.userList = []*users.User{}
+		return m
+	}
+
+	ctx := context.Background()
+	userList, err := m.userStore.ListUsers(ctx)
+	if err != nil {
+		m.registerStatus = fmt.Sprintf("Error loading users: %v", err)
+		m.userList = []*users.User{}
+		return m
+	}
+
+	m.userList = userList
+	items := []list.Item{}
+	for _, u := range userList {
+		items = append(items, userItem{user: u})
+	}
+
+	m.list.SetItems(items)
+	m.list.Title = "Users (admin only)"
+	return m
+}
+
+func (m Model) updateUsers(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.list.SetSize(msg.Width, msg.Height-7)
+	case userListMsg:
+		if msg.err != nil {
+			m.registerStatus = fmt.Sprintf("Error: %v", msg.err)
+		} else {
+			m.userList = msg.users
+			items := []list.Item{}
+			for _, u := range msg.users {
+				items = append(items, userItem{user: u})
+			}
+			m.list.SetItems(items)
+		}
+		return m, nil
+	case userRegistrationMsg:
+		m.registeringUser = false
+		if msg.err != nil {
+			m.registerStatus = fmt.Sprintf("Registration failed: %v", msg.err)
+		} else {
+			m.registerStatus = fmt.Sprintf("User %s registered successfully!", msg.userID)
+			// Reload user list
+			return m.withLoadedUsers(), nil
+		}
+		return m, nil
+	case tea.KeyMsg:
+		switch msg.String() {
+		case "q", "esc":
+			m.mode = modeMain
+			m.registerStatus = ""
+			return m, nil
+		case "n":
+			if !m.registeringUser {
+				m.registeringUser = true
+				m.registerStatus = "Starting registration..."
+				return m, m.registerNewUser()
+			}
+		}
+	}
+
+	var cmd tea.Cmd
+	m.list, cmd = m.list.Update(msg)
+	return m, cmd
+}
+
+func (m Model) viewUsers() string {
+	s := "User Management (admin only)\n\n"
+
+	if m.registeringUser {
+		s += "Registering new user...\n"
+		s += "Please touch your YubiKey...\n\n"
+	}
+
+	if m.registerStatus != "" {
+		s += m.registerStatus + "\n\n"
+	}
+
+	s += m.list.View() + "\n"
+	s += "[n:register new user] [q/esc:return to main]\n"
+
+	return s
+}
+
+func (m Model) registerNewUser() tea.Cmd {
+	return func() tea.Msg {
+		if m.userStore == nil {
+			return userRegistrationMsg{err: fmt.Errorf("user store not available")}
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+
+		// For now, we'll use a simple registration flow
+		// In a full implementation, you'd prompt for user ID, SSH users, and roles
+		// For this implementation, we'll use defaults and register the YubiKey
+
+		// Generate a temporary user ID (in real implementation, prompt for this)
+		userIDBytes := make([]byte, 8)
+		if _, err := rand.Read(userIDBytes); err != nil {
+			return userRegistrationMsg{err: fmt.Errorf("generate user ID: %w", err)}
+		}
+
+		// Use default RP ID from config
+		rpID := "lazyadmin.local"
+		if m.cfg.Auth.YubiKeyMode != "" {
+			// Could be configured per environment
+		}
+
+		// Register the credential
+		result, err := auth.RegisterFIDO2Credential(ctx, rpID, "lazyadmin", "newuser", userIDBytes)
+		if err != nil {
+			return userRegistrationMsg{err: fmt.Errorf("register credential: %w", err)}
+		}
+
+		// Create user with default values (in production, prompt for these)
+		// For now, use a placeholder user ID
+		newUserID := fmt.Sprintf("user_%d", time.Now().Unix())
+		newUser := &users.User{
+			ID:       newUserID,
+			SSHUsers: []string{newUserID}, // In production, prompt for SSH username
+			Roles:    []string{"read_only"}, // Default role, admin can change later
+		}
+
+		// Create user in database
+		if err := m.userStore.CreateUser(ctx, newUser); err != nil {
+			return userRegistrationMsg{err: fmt.Errorf("create user: %w", err)}
+		}
+
+		// Add credential
+		cred := &users.Credential{
+			RPID:        rpID,
+			CredentialID: result.CredentialID,
+			PublicKey:   result.PublicKey,
+		}
+
+		if err := m.userStore.AddCredential(ctx, newUserID, cred); err != nil {
+			// Try to clean up user if credential add fails
+			_ = m.userStore.DeleteUser(ctx, newUserID)
+			return userRegistrationMsg{err: fmt.Errorf("add credential: %w", err)}
+		}
+
+		return userRegistrationMsg{userID: newUserID}
 	}
 }

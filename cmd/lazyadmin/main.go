@@ -16,6 +16,7 @@ import (
 	"github.com/you/lazyadmin/internal/openapi"
 	"github.com/you/lazyadmin/internal/tasks"
 	"github.com/you/lazyadmin/internal/ui"
+	"github.com/you/lazyadmin/internal/users"
 )
 
 func main() {
@@ -38,7 +39,20 @@ func main() {
 		}
 	}
 
-	principal, err := auth.ResolvePrincipal(cfg)
+	logger, err := logging.NewAuditLogger(cfg.Logging.SQLitePath)
+	if err != nil {
+		log.Fatalf("audit logger: %v", err)
+	}
+	defer logger.Close()
+
+	// Initialize user store (uses same SQLite database)
+	userStore, err := users.NewStore(cfg.Logging.SQLitePath)
+	if err != nil {
+		log.Fatalf("user store: %v", err)
+	}
+	defer userStore.Close()
+
+	principal, err := auth.ResolvePrincipal(cfg, userStore)
 	if err != nil {
 		log.Fatalf("auth: %v", err)
 	}
@@ -46,12 +60,6 @@ func main() {
 	if err := auth.RequireYubiKeyIfConfigured(cfg, principal); err != nil {
 		log.Fatalf("yubikey: %v", err)
 	}
-
-	logger, err := logging.NewAuditLogger(cfg.Logging.SQLitePath)
-	if err != nil {
-		log.Fatalf("audit logger: %v", err)
-	}
-	defer logger.Close()
 
 	httpClients := make(map[string]*clients.HTTPClient)
 	for name, res := range cfg.Resources.HTTP {
@@ -75,7 +83,7 @@ func main() {
 
 	runner := tasks.NewRunner(cfg, logger, httpClients, pgClients)
 
-	m := ui.NewModel(cfg, principal, logger, httpClients, pgClients, runner)
+	m := ui.NewModel(cfg, principal, logger, userStore, httpClients, pgClients, runner)
 
 	if err := tea.NewProgram(m).Start(); err != nil {
 		log.Fatalf("tui error: %v", err)
