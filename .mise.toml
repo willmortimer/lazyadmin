@@ -26,3 +26,7 @@ env = { SSH_USER = "${USER}" }
 description = "Install Docker CLI and Engine (requires sudo)"
 run = "mise install docker@latest"
 
+[tasks.build-cli]
+description = "Build lazyadmin CLI wrapper (checks services and runs container)"
+run = "go build -o lazyadmin ./cmd/lazyadmin-cli"
+

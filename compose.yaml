@@ -4,7 +4,7 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
-    command: ["npm", "start"]
+    command: ["sh", "-c", "npm install && npm start"]
     environment:
       PORT: 3000
     networks:

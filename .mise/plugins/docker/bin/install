@@ -96,26 +96,50 @@ main() {
             ;;
     esac
     
-    # Start and enable Docker service
-    sudo systemctl start docker
-    sudo systemctl enable docker
+    # Start Docker service (handle both systemd and non-systemd environments)
+    if command -v systemctl &>/dev/null && systemctl is-system-running &>/dev/null 2>&1; then
+        # Systemd available - use it
+        sudo systemctl start docker 2>/dev/null || true
+        sudo systemctl enable docker 2>/dev/null || true
+        echo "✓ Docker service started via systemd"
+    else
+        # No systemd (container environment) - start dockerd manually
+        echo "⚠️  Systemd not available (container environment)"
+        echo "   Starting Docker daemon manually..."
+        
+        # Start dockerd in background if not running
+        if ! pgrep -x dockerd > /dev/null; then
+            sudo dockerd > /tmp/dockerd.log 2>&1 &
+            sleep 2
+            echo "✓ Docker daemon started"
+        else
+            echo "✓ Docker daemon already running"
+        fi
+    fi
     
-    # Add current user to docker group (optional, requires logout/login)
-    if ! groups | grep -q docker; then
-        sudo usermod -aG docker $USER
-        echo ""
-        echo "Note: Added $USER to docker group. You may need to log out and back in for this to take effect."
+    # Add current user to docker group (skip in containers where it may not be needed)
+    if [ -n "${USER:-}" ] && [ "$USER" != "root" ]; then
+        if ! groups | grep -q docker; then
+            sudo usermod -aG docker "$USER" 2>/dev/null || true
+        fi
     fi
     
     # Verify installation
     echo ""
     echo "Verifying Docker installation..."
-    sudo docker --version
-    sudo docker compose version
+    docker --version 2>/dev/null || sudo docker --version
+    docker compose version 2>/dev/null || sudo docker compose version
     
     echo ""
-    echo "Docker installation complete!"
-    echo "Run 'sudo docker run hello-world' to test the installation."
+    echo "✓ Docker installation complete!"
+    
+    # Test Docker if possible
+    if docker info &>/dev/null || sudo docker info &>/dev/null; then
+        echo "✓ Docker daemon is accessible"
+    else
+        echo "⚠️  Docker daemon may need to be started manually"
+        echo "   Try: sudo dockerd &"
+    fi
 }
 
 main "$@"
