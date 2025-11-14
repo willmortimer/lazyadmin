@@ -1,0 +1,12 @@
+[tools]
+go = "1.23"
+node = "22.11.0"
+
+[tasks.dev]
+description = "Run dev docker-compose stack"
+run = "docker compose up --build"
+
+[tasks.tui]
+description = "Run TUI natively"
+run = "go run ./cmd/lazyadmin"
+
