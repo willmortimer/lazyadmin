@@ -1,9 +1,17 @@
 [tools]
 go = "1.25"
 node = "25.2.0"
+# Docker is managed via custom plugin in .mise/plugins/docker
+# To install: mise plugin link docker .mise/plugins/docker && mise install docker@latest
 
 [env]
 GOTOOLCHAIN = "local"
+LAZYADMIN_CONFIG_PATH = "config/lazyadmin.yaml"
+LAZYADMIN_PG_DSN = "postgres://testuser:testpass@localhost:5433/testdb?sslmode=disable"
+LAZYADMIN_PG_USER = "testuser"
+LAZYADMIN_PG_PASSWORD = "testpass"
+LAZYADMIN_PG_DB = "testdb"
+LAZYADMIN_PG_PORT = "5433"
 
 [tasks.dev]
 description = "Run dev docker-compose stack"
@@ -12,4 +20,9 @@ run = "docker compose up --build"
 [tasks.tui]
 description = "Run TUI natively"
 run = "go run ./cmd/lazyadmin"
+env = { SSH_USER = "${USER}" }
+
+[tasks.install-docker]
+description = "Install Docker CLI and Engine (requires sudo)"
+run = "mise install docker@latest"
 

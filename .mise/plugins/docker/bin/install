@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Docker installation script for mise plugin
+# This installs Docker Engine and CLI on Linux systems
+
+detect_os() {
+    if [ -f /etc/os-release ]; then
+        . /etc/os-release
+        OS=$ID
+        VER=$VERSION_ID
+    else
+        echo "Cannot detect OS. This script supports Ubuntu, Debian, Fedora, and CentOS/RHEL."
+        exit 1
+    fi
+}
+
+install_docker_ubuntu_debian() {
+    echo "Installing Docker on Ubuntu/Debian..."
+    
+    # Update package index
+    sudo apt-get update
+    
+    # Install prerequisites
+    sudo apt-get install -y \
+        apt-transport-https \
+        ca-certificates \
+        curl \
+        gnupg \
+        lsb-release
+    
+    # Add Docker's official GPG key
+    sudo install -m 0755 -d /etc/apt/keyrings
+    curl -fsSL https://download.docker.com/linux/${OS}/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+    sudo chmod a+r /etc/apt/keyrings/docker.gpg
+    
+    # Set up the repository
+    echo \
+      "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/${OS} \
+      $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+    
+    # Install Docker Engine, CLI, and Containerd
+    sudo apt-get update
+    sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    echo "Docker installed successfully!"
+}
+
+install_docker_fedora() {
+    echo "Installing Docker on Fedora..."
+    
+    # Install prerequisites
+    sudo dnf -y install dnf-plugins-core
+    
+    # Add Docker repository
+    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
+    
+    # Install Docker Engine, CLI, and Containerd
+    sudo dnf -y install docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    echo "Docker installed successfully!"
+}
+
+install_docker_centos_rhel() {
+    echo "Installing Docker on CentOS/RHEL..."
+    
+    # Install prerequisites
+    sudo yum install -y yum-utils
+    
+    # Add Docker repository
+    sudo yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
+    
+    # Install Docker Engine, CLI, and Containerd
+    sudo yum install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+    
+    echo "Docker installed successfully!"
+}
+
+main() {
+    detect_os
+    
+    case $OS in
+        ubuntu|debian)
+            install_docker_ubuntu_debian
+            ;;
+        fedora)
+            install_docker_fedora
+            ;;
+        centos|rhel|rocky|almalinux)
+            install_docker_centos_rhel
+            ;;
+        *)
+            echo "Unsupported OS: $OS"
+            echo "Please install Docker manually: https://docs.docker.com/engine/install/"
+            exit 1
+            ;;
+    esac
+    
+    # Start and enable Docker service
+    sudo systemctl start docker
+    sudo systemctl enable docker
+    
+    # Add current user to docker group (optional, requires logout/login)
+    if ! groups | grep -q docker; then
+        sudo usermod -aG docker $USER
+        echo ""
+        echo "Note: Added $USER to docker group. You may need to log out and back in for this to take effect."
+    fi
+    
+    # Verify installation
+    echo ""
+    echo "Verifying Docker installation..."
+    sudo docker --version
+    sudo docker compose version
+    
+    echo ""
+    echo "Docker installation complete!"
+    echo "Run 'sudo docker run hello-world' to test the installation."
+}
+
+main "$@"
+

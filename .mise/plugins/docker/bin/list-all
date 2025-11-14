@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+# List available Docker versions
+# For mise, we'll just return "latest" since Docker uses package managers
+echo "latest"
+

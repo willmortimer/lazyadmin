@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Return the path where Docker binaries are installed
+echo "/usr/bin/docker"
+echo "/usr/bin/docker-compose"
+echo "/usr/libexec/docker/cli-plugins/docker-buildx"
+echo "/usr/libexec/docker/cli-plugins/docker-compose"
+
