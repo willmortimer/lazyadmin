@@ -166,7 +166,7 @@ func TestResolvePrincipal(t *testing.T) {
 				}
 			}()
 
-			principal, err := ResolvePrincipal(tt.cfg)
+			principal, err := ResolvePrincipal(tt.cfg, nil)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ResolvePrincipal() error = %v, wantErr %v", err, tt.wantErr)
 				return

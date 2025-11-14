@@ -1,3 +1,6 @@
+//go:build libfido2
+// +build libfido2
+
 package auth
 
 import (

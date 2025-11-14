@@ -3,17 +3,13 @@ package main
 import (
 	"context"
 	"crypto/rand"
-	"encoding/base64"
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"os/user"
 	"time"
 
 	"github.com/you/lazyadmin/internal/auth"
-	"github.com/you/lazyadmin/internal/config"
-	"github.com/you/lazyadmin/internal/users"
 )
 
 func main() {
