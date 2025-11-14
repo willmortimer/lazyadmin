@@ -46,7 +46,7 @@ Complete documentation suite including normative specification (SPEC.md), config
 
 ### Prerequisites
 
-- Go 1.23+
+- Go 1.25+
 - Docker and docker-compose
 - [mise](https://mise.jdx.dev/) (optional, for tool version management)
 

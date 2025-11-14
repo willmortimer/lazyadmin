@@ -1,6 +1,9 @@
 [tools]
-go = "1.23"
-node = "22.11.0"
+go = "1.25"
+node = "25.2.0"
+
+[env]
+GOTOOLCHAIN = "local"
 
 [tasks.dev]
 description = "Run dev docker-compose stack"
