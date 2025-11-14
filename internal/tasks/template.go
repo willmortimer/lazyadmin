@@ -18,4 +18,3 @@ func executeTemplate(tmpl string, data any) (string, error) {
 
 	return buf.String(), nil
 }
-

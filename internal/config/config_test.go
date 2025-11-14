@@ -8,9 +8,9 @@ import (
 
 func TestLoad(t *testing.T) {
 	tests := []struct {
-		name    string
-		yaml    string
-		wantErr bool
+		name     string
+		yaml     string
+		wantErr  bool
 		validate func(*testing.T, *Config)
 	}{
 		{
@@ -277,4 +277,3 @@ func TestLoad_MissingFile(t *testing.T) {
 		t.Error("Load() error = nil, want error")
 	}
 }
-

@@ -61,22 +61,22 @@ func (g *Generator) generateForBackend(ctx context.Context, cfg *config.Config, 
 				continue
 			}
 			for method, op := range pathItem.Operations() {
-			if !operationEligible(op, backend) {
-				continue
-			}
+				if !operationEligible(op, backend) {
+					continue
+				}
 
-			if hasRequiredRequestBody(op) {
-				continue
-			}
+				if hasRequiredRequestBody(op) {
+					continue
+				}
 
-			opID := op.OperationID
-			if opID == "" {
-				opID = fmt.Sprintf("%s_%s_%s", strings.ToLower(method), name, sanitizePath(path))
-			}
+				opID := op.OperationID
+				if opID == "" {
+					opID = fmt.Sprintf("%s_%s_%s", strings.ToLower(method), name, sanitizePath(path))
+				}
 
-			if backend.OpIDPrefix != "" {
-				opID = backend.OpIDPrefix + opID
-			}
+				if backend.OpIDPrefix != "" {
+					opID = backend.OpIDPrefix + opID
+				}
 
 				ops = append(ops, config.Operation{
 					ID:           opID,
@@ -147,4 +147,3 @@ func mustParseURL(s string) *url.URL {
 	}
 	return u
 }
-

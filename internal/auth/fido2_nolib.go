@@ -12,12 +12,12 @@ import (
 )
 
 var (
-	ErrNoYubiCreds      = errors.New("user has no configured YubiKey credentials")
-	ErrAssertionFailed  = errors.New("YubiKey assertion failed")
-	ErrNoMatchingCredID = errors.New("assertion credential ID did not match any configured credential")
-	ErrNoDeviceFound    = errors.New("no FIDO2 device found")
+	ErrNoYubiCreds        = errors.New("user has no configured YubiKey credentials")
+	ErrAssertionFailed    = errors.New("YubiKey assertion failed")
+	ErrNoMatchingCredID   = errors.New("assertion credential ID did not match any configured credential")
+	ErrNoDeviceFound      = errors.New("no FIDO2 device found")
 	ErrRegistrationFailed = errors.New("FIDO2 registration failed")
-	ErrFIDO2NotAvailable = errors.New("FIDO2 support not available: libfido2-dev not installed. Install with: sudo apt-get install libfido2-dev")
+	ErrFIDO2NotAvailable  = errors.New("FIDO2 support not available: libfido2-dev not installed. Install with: sudo apt-get install libfido2-dev")
 )
 
 // RequireFIDO2Assertion prompts the user to touch a key and verifies an assertion
@@ -52,4 +52,3 @@ func RegisterFIDO2Credential(ctx context.Context, rpID string, rpName string, us
 func ContextWithTimeout() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 30*time.Second)
 }
-

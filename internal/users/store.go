@@ -26,12 +26,12 @@ type User struct {
 
 // Credential represents a FIDO2 credential for a user.
 type Credential struct {
-	ID          int64
-	UserID      string
-	RPID        string
+	ID           int64
+	UserID       string
+	RPID         string
 	CredentialID string // Base64URL-encoded
-	PublicKey   string // Base64URL-encoded SPKI
-	CreatedAt   time.Time
+	PublicKey    string // Base64URL-encoded SPKI
+	CreatedAt    time.Time
 }
 
 // Store manages users and credentials in SQLite.
@@ -272,12 +272,12 @@ func (s *Store) GetCredentials(ctx context.Context, userID string) ([]*Credentia
 	var creds []*Credential
 	for rows.Next() {
 		var (
-			id          int64
-			uid         string
-			rpID        string
+			id           int64
+			uid          string
+			rpID         string
 			credentialID string
-			publicKey   string
-			createdAt   string
+			publicKey    string
+			createdAt    string
 		)
 
 		if err := rows.Scan(&id, &uid, &rpID, &credentialID, &publicKey, &createdAt); err != nil {
@@ -287,12 +287,12 @@ func (s *Store) GetCredentials(ctx context.Context, userID string) ([]*Credentia
 		createdAtTime, _ := time.Parse(time.RFC3339Nano, createdAt)
 
 		creds = append(creds, &Credential{
-			ID:          id,
-			UserID:      uid,
-			RPID:        rpID,
+			ID:           id,
+			UserID:       uid,
+			RPID:         rpID,
 			CredentialID: credentialID,
-			PublicKey:   publicKey,
-			CreatedAt:   createdAtTime,
+			PublicKey:    publicKey,
+			CreatedAt:    createdAtTime,
 		})
 	}
 
@@ -373,4 +373,3 @@ func containsMiddle(s, substr string) bool {
 	}
 	return false
 }
-

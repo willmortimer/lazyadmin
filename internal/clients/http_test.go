@@ -176,4 +176,3 @@ func TestHTTPClient_Request_ContextCancellation(t *testing.T) {
 		t.Errorf("Request() error = %v, want error containing 'canceled'", err)
 	}
 }
-

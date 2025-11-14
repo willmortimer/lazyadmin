@@ -205,4 +205,3 @@ func RenderSummary(task config.Task, tr TaskResult) (string, error) {
 
 	return executeTemplate(task.SummaryTemplate, ctx)
 }
-

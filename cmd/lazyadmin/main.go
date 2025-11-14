@@ -89,4 +89,3 @@ func main() {
 		log.Fatalf("tui error: %v", err)
 	}
 }
-

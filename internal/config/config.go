@@ -23,10 +23,10 @@ type AuthConfig struct {
 }
 
 type User struct {
-	ID                string              `yaml:"id"`
-	SSHUsers          []string            `yaml:"ssh_users"`
-	Roles             []string            `yaml:"roles"`
-	YubiKeyCreds      []YubiKeyCredential `yaml:"yubikey_credentials"`
+	ID           string              `yaml:"id"`
+	SSHUsers     []string            `yaml:"ssh_users"`
+	Roles        []string            `yaml:"roles"`
+	YubiKeyCreds []YubiKeyCredential `yaml:"yubikey_credentials"`
 }
 
 type HTTPResource struct {
@@ -45,19 +45,19 @@ type ResourcesConfig struct {
 type Operation struct {
 	ID           string   `yaml:"id"`
 	Label        string   `yaml:"label"`
-	Type         string   `yaml:"type"`    // "http" | "postgres"
-	Target       string   `yaml:"target"`  // key into resources
-	Method       string   `yaml:"method"`  // for http
-	Path         string   `yaml:"path"`    // for http
-	Query        string   `yaml:"query"`   // for postgres
+	Type         string   `yaml:"type"`   // "http" | "postgres"
+	Target       string   `yaml:"target"` // key into resources
+	Method       string   `yaml:"method"` // for http
+	Path         string   `yaml:"path"`   // for http
+	Query        string   `yaml:"query"`  // for postgres
 	AllowedRoles []string `yaml:"allowed_roles"`
 }
 
 type OpenAPIBackend struct {
-	DocURL         string   `yaml:"doc_url"`
-	TagFilter      []string `yaml:"tag_filter"`
-	IncludeUntagged bool    `yaml:"include_untagged"`
-	OpIDPrefix     string   `yaml:"op_id_prefix"`
+	DocURL          string   `yaml:"doc_url"`
+	TagFilter       []string `yaml:"tag_filter"`
+	IncludeUntagged bool     `yaml:"include_untagged"`
+	OpIDPrefix      string   `yaml:"op_id_prefix"`
 }
 
 type OpenAPIConfig struct {
@@ -75,7 +75,7 @@ const (
 type OnErrorPolicy string
 
 const (
-	OnErrorFailFast  OnErrorPolicy = "fail_fast"
+	OnErrorFailFast   OnErrorPolicy = "fail_fast"
 	OnErrorBestEffort OnErrorPolicy = "best_effort"
 )
 
@@ -101,14 +101,14 @@ type TaskStep struct {
 }
 
 type Task struct {
-	ID              string          `yaml:"id"`
-	Label           string          `yaml:"label"`
-	AllowedRoles    []string        `yaml:"allowed_roles"`
-	RiskLevel       RiskLevel       `yaml:"risk_level"`
-	RequireYubiKey  bool            `yaml:"require_yubikey"`
-	OnError         OnErrorPolicy   `yaml:"on_error"`
-	Steps           []TaskStep      `yaml:"steps"`
-	SummaryTemplate string          `yaml:"summary_template"`
+	ID              string        `yaml:"id"`
+	Label           string        `yaml:"label"`
+	AllowedRoles    []string      `yaml:"allowed_roles"`
+	RiskLevel       RiskLevel     `yaml:"risk_level"`
+	RequireYubiKey  bool          `yaml:"require_yubikey"`
+	OnError         OnErrorPolicy `yaml:"on_error"`
+	Steps           []TaskStep    `yaml:"steps"`
+	SummaryTemplate string        `yaml:"summary_template"`
 }
 
 type Config struct {
@@ -141,4 +141,3 @@ func Load() (*Config, error) {
 
 	return &cfg, nil
 }
-

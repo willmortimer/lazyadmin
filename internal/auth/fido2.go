@@ -26,10 +26,10 @@ import (
 // such as github.com/keys-pub/go-libfido2.
 
 var (
-	ErrNoYubiCreds      = errors.New("user has no configured YubiKey credentials")
-	ErrAssertionFailed  = errors.New("YubiKey assertion failed")
-	ErrNoMatchingCredID = errors.New("assertion credential ID did not match any configured credential")
-	ErrNoDeviceFound    = errors.New("no FIDO2 device found")
+	ErrNoYubiCreds        = errors.New("user has no configured YubiKey credentials")
+	ErrAssertionFailed    = errors.New("YubiKey assertion failed")
+	ErrNoMatchingCredID   = errors.New("assertion credential ID did not match any configured credential")
+	ErrNoDeviceFound      = errors.New("no FIDO2 device found")
 	ErrRegistrationFailed = errors.New("FIDO2 registration failed")
 )
 
@@ -287,4 +287,3 @@ func parseCOSEPublicKey(coseKey []byte) (*ecdsa.PublicKey, error) {
 func ContextWithTimeout() (context.Context, context.CancelFunc) {
 	return context.WithTimeout(context.Background(), 30*time.Second)
 }
-

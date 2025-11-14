@@ -33,4 +33,3 @@ func (c *HTTPClient) Request(ctx context.Context, method, path string) (string, 
 	defer resp.Body.Close()
 	return fmt.Sprintf("HTTP %d %s", resp.StatusCode, http.StatusText(resp.StatusCode)), nil
 }
-

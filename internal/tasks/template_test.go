@@ -15,10 +15,10 @@ func TestExecuteTemplate(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "simple template",
-			tmpl: "Hello {{.Name}}",
-			data: map[string]string{"Name": "World"},
-			want: "Hello World",
+			name:    "simple template",
+			tmpl:    "Hello {{.Name}}",
+			data:    map[string]string{"Name": "World"},
+			want:    "Hello World",
 			wantErr: false,
 		},
 		{
@@ -31,7 +31,7 @@ func TestExecuteTemplate(t *testing.T) {
 				Task:    config.Task{ID: "deploy"},
 				Success: true,
 			},
-			want: "Task deploy succeeded: true",
+			want:    "Task deploy succeeded: true",
 			wantErr: false,
 		},
 		{
@@ -42,7 +42,7 @@ func TestExecuteTemplate(t *testing.T) {
 			}{
 				Task: config.Task{ID: "test", Label: "Test Task"},
 			},
-			want: "test - Test Task",
+			want:    "test - Test Task",
 			wantErr: false,
 		},
 		{
@@ -198,4 +198,3 @@ type testError struct {
 func (e *testError) Error() string {
 	return e.msg
 }
-

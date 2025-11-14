@@ -31,7 +31,7 @@ func main() {
 
 	outputStr := strings.TrimSpace(string(output))
 	runningServices := strings.Split(outputStr, "\n")
-	
+
 	// Convert to map for easy lookup
 	servicesMap := make(map[string]bool)
 	for _, svc := range runningServices {
@@ -70,4 +70,3 @@ func main() {
 		os.Exit(1)
 	}
 }
-

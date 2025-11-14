@@ -78,8 +78,8 @@ func ResolvePrincipal(cfg *config.Config, userStore *users.Store) (*Principal, e
 			}
 
 			return &Principal{
-				DBUser:  dbUser,
-				SSHUser: sshUser,
+				DBUser:     dbUser,
+				SSHUser:    sshUser,
 				ConfigUser: configUser,
 			}, nil
 		}
@@ -134,4 +134,3 @@ func RequireYubiKeyIfConfigured(cfg *config.Config, p *Principal) error {
 
 	return RequireFIDO2Assertion(ctx, p.ConfigUser)
 }
-

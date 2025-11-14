@@ -267,4 +267,3 @@ func TestBoolToInt(t *testing.T) {
 		})
 	}
 }
-

@@ -31,4 +31,3 @@ func (c *PostgresClient) RunScalarQuery(ctx context.Context, query string) (stri
 	}
 	return fmt.Sprintf("%v", value), nil
 }
-

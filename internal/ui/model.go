@@ -50,8 +50,8 @@ type operationResultMsg struct {
 }
 
 type taskResultMsg struct {
-	task   config.Task
-	result *tasks.TaskResult
+	task    config.Task
+	result  *tasks.TaskResult
 	summary string
 }
 
@@ -59,8 +59,10 @@ type taskItem struct {
 	task config.Task
 }
 
-func (i taskItem) Title() string       { return i.task.Label }
-func (i taskItem) Description() string { return fmt.Sprintf("task:%s (risk:%s)", i.task.ID, i.task.RiskLevel) }
+func (i taskItem) Title() string { return i.task.Label }
+func (i taskItem) Description() string {
+	return fmt.Sprintf("task:%s (risk:%s)", i.task.ID, i.task.RiskLevel)
+}
 func (i taskItem) FilterValue() string { return i.task.Label }
 
 type userItem struct {
@@ -98,11 +100,11 @@ type Model struct {
 	pgClients   map[string]*clients.PostgresClient
 	taskRunner  *tasks.Runner
 
-	mode      mode
-	filter    filterType
-	viewTasks bool
-	list      list.Model
-	lastOp    *config.Operation
+	mode       mode
+	filter     filterType
+	viewTasks  bool
+	list       list.Model
+	lastOp     *config.Operation
 	lastOutput string
 	lastError  string
 
@@ -711,7 +713,7 @@ func (m Model) registerNewUser() tea.Cmd {
 		newUserID := fmt.Sprintf("user_%d", time.Now().Unix())
 		newUser := &users.User{
 			ID:       newUserID,
-			SSHUsers: []string{newUserID}, // In production, prompt for SSH username
+			SSHUsers: []string{newUserID},   // In production, prompt for SSH username
 			Roles:    []string{"read_only"}, // Default role, admin can change later
 		}
 
@@ -722,9 +724,9 @@ func (m Model) registerNewUser() tea.Cmd {
 
 		// Add credential
 		cred := &users.Credential{
-			RPID:        rpID,
+			RPID:         rpID,
 			CredentialID: result.CredentialID,
-			PublicKey:   result.PublicKey,
+			PublicKey:    result.PublicKey,
 		}
 
 		if err := m.userStore.AddCredential(ctx, newUserID, cred); err != nil {

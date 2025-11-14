@@ -240,4 +240,3 @@ func TestPrincipal_HasAnyRole(t *testing.T) {
 		})
 	}
 }
-

@@ -82,4 +82,3 @@ func main() {
 		fmt.Printf("Public Key: %s\n", result.PublicKey)
 	}
 }
-
